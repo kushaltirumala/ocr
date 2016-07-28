@@ -21,9 +21,7 @@ data_labels = np.loadtxt(open('dataLabels.csv', 'rb')).tolist()
 
 train_indices, test_indices = train_test_split(list(range(5000)))
 
-print "PERFORMANCE"
-print "-----------"
-print "fucking fjdklsjfkldasjfkdsjlkdsjflkdsj chetan somani"
+
 
 for i in xrange(5, 100, 5):
     nn = OCRNeuralNetwork(i, data_matrix, data_labels, train_indices, False)
