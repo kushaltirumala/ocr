@@ -12,3 +12,6 @@ improvements:
 
 To run the code with your own handrawn image: take an picture or screenshot of a digit, turn the image into 20pixels by 20 pixels, add it as the image (change <code>im = Image.open('nameofimagefilehere') </code>), and run <code>python ocr.py</code>
 
+
+
+
