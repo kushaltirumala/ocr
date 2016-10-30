@@ -11,13 +11,27 @@ import os
 import json
 from PIL import Image
 
-#By Kushal Tirumala and Bryan Chen
+
 class ocr:
+    #learning rate
     lr = 0.1
+
+    #height/width of picture
     width = 20
+
+    #where the weights of the ANN are stored (so the ANN doesn't have to be trained every time)
     filepath = 'nn.json'
     use_file = True
 
+
+    #initializes the weights of the ANN randomly, and trains the ANN based on the data.csv and
+    #the associated dataLabels.csv file. Every node in one layer has a link to a node in 
+    #another error (refer to the diagram), 
+    #which is why the weights for the links between two layers in a matrix. 
+    #For example, val1 has 400 columns (training data) and hiddenNodesNumbers rows. 
+    #The next layer, val2, has hiddenNodesNumbers rows and 10 columns (representing the array of 
+    #probabilities for digits 0-9). If there's already an nn.json file with the weights,
+    #the ANN is just created with those pre-existing weights.
     def __init__(self, hiddenNodesNumber, trindices, labelData, dmatrix, use_file):
         self.sigmoid = np.vectorize(self.sigmoidScalar)
         self.sigmoid_prime = np.vectorize(self.sigmoidPrime)
@@ -36,7 +50,7 @@ class ocr:
 
             td = namedtuple('td', ['y0', 'label'])
 
-            self.train([td(self.data_matrix[i], int(self.labelData[i])) for i in trindices])
+            self.train([td(self.dmatrix[i], int(self.labelData[i])) for i in trindices])
 
 
             self.save()
@@ -46,7 +60,7 @@ class ocr:
             self._load()
 
 
-    #draws the image
+    #draws the image before predicting
     def draw(self, sample):
         pixelArray = [sample[j:j+self.width] for j in xrange(0, len(sample), self.width)]
         plt.imshow(zip(*pixelArray), cmap = cm.Greys_r, interpolation="nearest")
@@ -60,6 +74,31 @@ class ocr:
 
     
     #trains the ANN with the csv files
+    #how it works:
+    #
+    # forward propagation
+    # --------------------
+    # for each data point in the training set, it takes the transpose and mulitplies 
+    # with matrix val1 (the weights) linking the input and hidden layers). Thus it 
+    # comes out with a resulting vector of ouputs for the hidden layer (of size hiddenNodesNumber)
+    # The bias vector is added and the vectorized sigmoid function applied (producing a value
+    # between 0 and 1), and y1 becomes the output vector for the hidden layer. The same process
+    # is repeated with y2 for computing the output vector for the output layer. 
+    #
+    # back propagation
+    # ----------------
+    # the output vector y2 is compared with the vector of actual values, resulting in a 
+    # errorOutput. Then, for every hidden layer onwards it calculates the vector of errors:
+    # it takes the weight matrix for every layer, multiplies it by the transpose of the
+    # errorOutput, and multiplies that with the derivative of the activation function for the
+    # previous layerr.
+    #
+    # correction
+    # -----------
+    # weights are then updates at each layer of the ANN:the error matrix at every layer is
+    # multiplied by the output of the previous layer, and then that's multiplied by the
+    #learning rate to correct the weights for the current layer.
+
     def train(self, tdArray):
         for data in tdArray:
             y1 = np.dot(np.mat(self.val1), np.mat(data[0]).T)
@@ -113,7 +152,7 @@ class ocr:
     def sigmoidPrime(self, z):
         return self.sigmoid(z) * (1 - self.sigmoid(z))
 
-
+        
     #flips the input image
     def flip(self, img):
         width = img.size[0]
@@ -126,7 +165,9 @@ class ocr:
                 img.putpixel((x, y), right)
 
 
-    #predicts a letter based off the 1-D array (of size 400 for a 20px by 20px pic)
+    #predicts a letter based off the 1-D array (of size 400 for a 20px by 20px pic) 
+    # produces an output vector of size 10 (with probability at index 0 representing
+    # the probability that the input image is a 0, and so on).
     def predict(self, test):
         print((test))
 
@@ -149,8 +190,8 @@ class ocr:
         return [((x * 0.12) - 0.06) for x in np.random.rand(out, input)]
 
 
-#Test
-HIDDEN_NODE_COUNT = 15
+#testing the ANN
+HIDDEN_NODE_COUNT = 55
 data_matrix = np.loadtxt(open('data.csv', 'rb'), delimiter = ',')
 labelData = np.loadtxt(open('dataLabels.csv', 'rb'))
 
@@ -158,13 +199,16 @@ data_matrix = data_matrix.tolist()
 labelData = labelData.tolist()
 
 nn = ocr(HIDDEN_NODE_COUNT, list(range(5000)), labelData, data_matrix, True);
+
+#this is where you would change the picture in which there is the 
+# the digit you want to predict
 im = Image.open('pic7.png')
 im = im.rotate(-90);
 nn.flip(im)
 gry = im.convert('L')
 bw = np.asarray(gry).copy()
 
-#basically kinda what it does -->
+# basically what it does -->
 # bw[bw < 128] = 1 
 # bw[bw >= 128] = 0
 pic = bw.ravel()

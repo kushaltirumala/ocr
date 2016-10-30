@@ -1,31 +1,36 @@
-import numpy as np
-from ocr import OCRNeuralNetwork
 from sklearn.cross_validation import train_test_split
 
-def test(data_matrix, data_labels, test_indices, nn):
-    avg_sum = 0
-    for j in xrange(100):
-        correct_guess_count = 0
-        for i in test_indices:
-            test = data_matrix[i]
+
+import numpy as np
+from ocr import ocr
+
+train_indices, indices = train_test_split(list(range(5000)))
+
+#small test function; the inner loop
+# tests each combination of # hidden nodes
+# a 100 times, and the outerloop takes the
+# average of those 100 times, and uses that
+# as the general accuracy for that many hidden nodes in the ANN
+def test(dm, dl, indices, nn):
+    avg = 0
+    for i in xrange(100):
+        rightguesses = 0
+        for j in indices:
+            test = dm[j]
             prediction = nn.predict(test)
-            if data_labels[i] == prediction:
-                correct_guess_count += 1
+            if dl[j] == prediction:
+                rightguesses += 1
 
-        avg_sum += (correct_guess_count / float(len(test_indices)))
-    return avg_sum / 100
+        avg += (rightguesses / float(len(indices)))
+    return avg / 100
 
+#opens the data sets
+dm = np.loadtxt(open('data.csv', 'rb'), delimiter = ',').tolist()
+dl = np.loadtxt(open('dataLabels.csv', 'rb')).tolist()
 
-data_matrix = np.loadtxt(open('data.csv', 'rb'), delimiter = ',').tolist()
-data_labels = np.loadtxt(open('dataLabels.csv', 'rb')).tolist()
-
-train_indices, test_indices = train_test_split(list(range(5000)))
-
-print "PERFORMANCE"
-print "-----------"
-print "fucking fjdklsjfkldasjfkdsjlkdsjflkdsj chetan somani"
-
-for i in xrange(5, 100, 5):
-    nn = OCRNeuralNetwork(i, data_matrix, data_labels, train_indices, False)
-    performance = str(test(data_matrix, data_labels, test_indices, nn))
-    print "{i} Hidden Nodes: {val}".format(i=i, val=performance)
+#goes through every combination of # of hidden nodes and checks
+# the accuracy of the ANN (prints it out)
+for i in xrange(5, 100, 10):
+    nn = ocr(i, indices, dl, dm, False)
+    performance = test(dm, dl, indices, nn)
+    print "" + str(i) + " Hidden Nodes --> " + str(performance) 
