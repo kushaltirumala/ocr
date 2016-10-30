@@ -34,3 +34,5 @@ for i in xrange(5, 100, 10):
     nn = ocr(i, indices, dl, dm, False)
     performance = test(dm, dl, indices, nn)
     print "" + str(i) + " Hidden Nodes --> " + str(performance) 
+
+
